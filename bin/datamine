@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+require 'datamine/cli'
+
+exit Datamine::CLI.run(ARGV)
