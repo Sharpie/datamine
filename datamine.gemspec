@@ -15,7 +15,7 @@ spec = Gem::Specification.new do |s|
   s.executables << 'datamine'
 
   s.add_runtime_dependency 'gli'
-  s.add_runtime_dependency 'httparty'
+  s.add_runtime_dependency 'activeresource'
 
   s.add_development_dependency 'pry'
 end
