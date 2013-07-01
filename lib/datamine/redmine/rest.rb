@@ -45,5 +45,16 @@ module Datamine::Redmine
         self.collection_parser = IssueCollection
       end
     end
+
+    def self.paginate klass, offset, limit, total_count, params = {}
+      skip = offset
+
+      while skip < total_count
+        issues = klass.find(:all, :params => {:offset => skip, :limit => limit}.merge(params))
+        yield issues
+        skip += limit
+      end
+    end
+
   end
 end
