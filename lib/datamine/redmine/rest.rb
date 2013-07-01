@@ -48,11 +48,16 @@ module Datamine::Redmine
 
     def self.paginate klass, offset, limit, total_count, params = {}
       skip = offset
+      i    = 1
+      n    = (total_count.to_f / limit).ceil
 
       while skip < total_count
+        # TODO: Proper logging!
+        $stderr.puts "Fetching page #{i} of #{n}"
         issues = klass.find(:all, :params => {:offset => skip, :limit => limit}.merge(params))
         yield issues
         skip += limit
+        i    += 1
       end
     end
 
