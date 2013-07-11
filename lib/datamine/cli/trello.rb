@@ -17,6 +17,7 @@ module Datamine::CLI
 
         board = Trello::Board.find(options[:trello][:board_id])
         list_hash = board.lists.map{|l| {l.name => l.id}}.reduce Hash.new, :merge
+        existing_cards = board.cards.map{|c| c.name}
 
         issues_to_add = CSV.table(args.first).map do |row|
           {
@@ -27,6 +28,11 @@ module Datamine::CLI
         end
 
         issues_to_add.each do |card|
+          if existing_cards.include? card[:name]
+            $stderr.puts "Issue #{card[:name].scan(/^\([\d]+\)/).first} is already on the board."
+            next
+          end
+
           begin
             target_list = list_hash[card[:project]]
             target_list ||= list_hash["Puppet"] # Dump things into the Puppet list by default
@@ -44,6 +50,8 @@ module Datamine::CLI
             end
           end
         end
+
+        $stderr.puts "There are now #{board.cards.length} cards on the board."
 
       end
     end
