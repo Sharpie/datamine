@@ -15,16 +15,23 @@ module Datamine::CLI
           config.member_token = options[:trello][:token]
         end
 
+        board = Trello::Board.find(options[:trello][:board_id])
+        list_hash = board.lists.map{|l| {l.name => l.id}}.reduce Hash.new, :merge
+
         issues_to_add = CSV.table(args.first).map do |row|
           {
             :name => "(#{row[:id]}) #{row[:subject]}",
-            :description => "http://projects.puppetlabs.com/issues/#{row[:id]}\n#{row[:description]}"
+            :description => "http://projects.puppetlabs.com/issues/#{row[:id]}\n#{row[:description]}",
+            :project => row[:project],
           }
         end
 
         issues_to_add.each do |card|
           begin
-            Trello::Card.create({:name => card[:name], :list_id => options[:trello][:list_id], :description => card[:description]})
+            target_list = list_hash[card[:project]]
+            target_list ||= list_hash["Puppet"] # Dump things into the Puppet list by default
+
+            Trello::Card.create({:name => card[:name], :list_id => target_list, :description => card[:description]})
           rescue Trello::Error => e
             if e.to_s =~ /^invalid value for desc/
               # Sometimes, Trello can't handle the full description. Retry
