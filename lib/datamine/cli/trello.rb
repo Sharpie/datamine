@@ -54,5 +54,21 @@ module Datamine::CLI
         Trello::List.find(options[:trello][:list_id]).cards.map{|c| c.delete}
       end
     end
+
+    c.desc 'List available lists'
+    c.command :list do |s|
+      s.action do |global_options,options,args|
+        options.update YAML.load_file(File.join(ENV['HOME'], '.datamine.rc.yaml'))
+
+        Trello.configure do |config|
+          config.developer_public_key = options[:trello][:key]
+          config.member_token = options[:trello][:token]
+        end
+
+        Trello::List.find(options[:trello][:list_id]).board.lists.map do |list|
+          puts "#{list.name}: #{list.id}"
+        end
+      end
+    end
   end
 end
