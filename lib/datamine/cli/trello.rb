@@ -51,7 +51,7 @@ module Datamine::CLI
           config.member_token = options[:trello][:token]
         end
 
-        Trello::List.find(options[:trello][:list_id]).cards.map{|c| c.delete}
+        Trello::Board.find(options[:trello][:board_id]).cards.map{|c| c.delete}
       end
     end
 
@@ -65,7 +65,7 @@ module Datamine::CLI
           config.member_token = options[:trello][:token]
         end
 
-        Trello::List.find(options[:trello][:list_id]).board.lists.map do |list|
+        Trello::Board.find(options[:trello][:board_id]).lists.map do |list|
           puts "#{list.name}: #{list.id}"
         end
       end
