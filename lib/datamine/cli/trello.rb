@@ -85,5 +85,23 @@ module Datamine::CLI
         end
       end
     end
+
+    c.desc 'Add users to board'
+    c.command :add_users do |s|
+      s.action do |global_options,options,args|
+        require 'addressable/uri'
+        options.update YAML.load_file(File.join(ENV['HOME'], '.datamine.rc.yaml'))
+
+        board_id = options[:trello].delete :board_id # Remove from hash so not encoded into URL
+        uri = Addressable::URI.new
+
+        CSV.table(args.first).map do |row|
+          uri.query_values = { :fullName => row[:fullname], :email => row[:email], }.update options[:trello]
+          puts `curl -H 'Accept: application/json' -X PUT --data '#{uri.query}' https://api.trello.com/1/board/#{board_id}/members`
+        end
+
+      end
+    end
+
   end
 end
