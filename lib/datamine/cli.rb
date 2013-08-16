@@ -11,3 +11,4 @@ end
 
 require 'datamine/cli/redmine'
 require 'datamine/cli/trello'
+require 'datamine/cli/jira'
