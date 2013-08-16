@@ -23,9 +23,17 @@ module Datamine::CLI
       }
 
       remote_link = {
+        'application' => {
+          'name' => 'Puppet Labs Redmine'
+        },
+        'relationship' => 'clones',
         'object' => {
           'url'   => 'http://projects.puppetlabs.com/issues/15106',
           'title' => "Missing site.pp can cause error 'Cannot find definition Class'",
+          'icon'  => {
+            'url16x16' => 'http://projects.puppetlabs.com/favicon.ico',
+            'title'    => '#15106'
+          }
         }
       }
 
