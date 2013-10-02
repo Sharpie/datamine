@@ -1,4 +1,5 @@
 require 'csv'
+require 'json'
 require 'trello'
 require 'pry'
 
@@ -19,12 +20,28 @@ module Datamine::CLI
         list_hash = board.lists.map{|l| {l.name => l.id}}.reduce Hash.new, :merge
         existing_cards = board.cards.map{|c| c.name}
 
-        issues_to_add = CSV.table(args.first).map do |row|
-          {
-            :name => "(#{row[:id]}) #{row[:subject]}",
-            :description => "http://projects.puppetlabs.com/issues/#{row[:id]}\n#{row[:description]}",
-            :project => row[:project],
-          }
+        issue_file = args.first
+        case File.extname issue_file
+        when '.csv'
+          issues_to_add = CSV.table(issue_file).map do |row|
+            {
+              :name => "(#{row[:id]}) #{row[:subject]}",
+              :description => "# http://projects.puppetlabs.com/issues/#{row[:id]}\n---\n#{row[:description]}",
+              :project => row[:project],
+            }
+          end
+        when '.json'
+          tickets = JSON.load(File.open(issue_file, 'r') {|f| f.read})
+          tickets.select! {|t| not t['pull_request']['html_url'].nil? }
+
+          issues_to_add = tickets.map do |t|
+            repo = Pathname.new(t['html_url']).dirname.dirname.basename.to_s
+            {
+             :name => "(#{repo}/#{t['number']}) #{t['title']}",
+             :description => "# #{t['html_url']}\n---\n#{t['body']}",
+             :project => 'Puppet Modules',
+            }
+          end
         end
 
         issues_to_add.each do |card|
@@ -37,12 +54,13 @@ module Datamine::CLI
             target_list = list_hash[card[:project]]
             target_list ||= list_hash["Puppet"] # Dump things into the Puppet list by default
 
-            Trello::Card.create({:name => card[:name], :list_id => target_list, :description => card[:description]})
+            Trello::Card.create({:name => card[:name], :list_id => target_list, :desc => card[:description]})
           rescue Trello::Error => e
             if e.to_s =~ /^invalid value for desc/
               # Sometimes, Trello can't handle the full description. Retry
               # using just the first line, which is a URL link to the Redmine
               # issue.
+              $stderr.puts "Issue rejected. Retrying"
               card[:description] = card[:description].split[0]
               retry
             else
