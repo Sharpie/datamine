@@ -1,7 +1,6 @@
 require 'csv'
 require 'json'
 require 'trello'
-require 'pry'
 
 module Datamine::CLI
   desc 'Interact with Trello'
