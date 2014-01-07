@@ -69,68 +69,63 @@ module Datamine::CLI
       end
     end
 
+    c.desc 'Add cards to a list on the board'
+    c.arg_name 'json_file'
+    c.command :add do |s|
+
+      s.desc 'The name or id of the list to which cards should be added'
+      s.arg_name 'string'
+      s.flag :list
+
+      s.action do |global_options,options,args|
+        configure_trello options
+
+        board = Trello::Board.find(options[:board_id])
+        list_hash = board.lists.map{|l| {l.name => l.id}}.reduce Hash.new, :merge
+
+        target_list = list_hash[options[:list]] || list_hash[list_hash.key(options[:list])]
+        raise 'You must target this command at an existing list!' if target_list.nil?
+
+        issue_file = args.first
+        raise 'You must provide a valid json file' if issue_file.nil? || (not File.exist?(issue_file))
+
+        tickets = JSON.parse(File.read(issue_file))
+
+        existing_cards = board.cards.map{|c| c.name}
+        tickets.each do |t|
+          card = {
+           :name => "(#{t['key']}) #{t['summary']}",
+           :description => "# #{t['url']}\n---\n#{t['description']}",
+          }
+
+          if existing_cards.include? card[:name]
+            $stderr.puts "Issue #{t['key']} is already on the board."
+            next
+          end
+
+          begin
+            Trello::Card.create({:name => card[:name], :list_id => target_list, :desc => card[:description]})
+          rescue Trello::Error => e
+            if e.to_s =~ /^invalid value for desc/
+              # Sometimes, Trello can't handle the full description. Retry
+              # using just the first line, which is a URL link to the Redmine
+              # issue.
+              $stderr.puts "Issue rejected. Retrying"
+              card[:description] = card[:description].split[0]
+              retry
+            else
+              raise e
+            end
+          end
+        end
+
+        $stderr.puts "There are now #{board.cards.length} cards on the board."
+
+      end
+    end
+
   #  # Everything below this line is currently broken and shouldn't be used.
 
-  #  c.desc 'Add issues to Trello'
-  #  c.command :add do |s|
-  #    s.action do |global_options,options,args|
-  #      board = Trello::Board.find(options[:trello][:board_id])
-  #      list_hash = board.lists.map{|l| {l.name => l.id}}.reduce Hash.new, :merge
-  #      existing_cards = board.cards.map{|c| c.name}
-
-  #      issue_file = args.first
-  #      case File.extname issue_file
-  #      when '.csv'
-  #        issues_to_add = CSV.table(issue_file).map do |row|
-  #          {
-  #            :name => "(#{row[:id]}) #{row[:subject]}",
-  #            :description => "# http://projects.puppetlabs.com/issues/#{row[:id]}\n---\n#{row[:description]}",
-  #            :project => row[:project],
-  #          }
-  #        end
-  #      when '.json'
-  #        tickets = JSON.load(File.open(issue_file, 'r') {|f| f.read})
-  #        tickets.select! {|t| not t['pull_request']['html_url'].nil? }
-
-  #        issues_to_add = tickets.map do |t|
-  #          repo = Pathname.new(t['html_url']).dirname.dirname.basename.to_s
-  #          {
-  #           :name => "(#{repo}/#{t['number']}) #{t['title']}",
-  #           :description => "# #{t['html_url']}\n---\n#{t['body']}",
-  #           :project => 'Puppet Modules',
-  #          }
-  #        end
-  #      end
-
-  #      issues_to_add.each do |card|
-  #        if existing_cards.include? card[:name]
-  #          $stderr.puts "Issue #{card[:name].scan(/^\([\d]+\)/).first} is already on the board."
-  #          next
-  #        end
-
-  #        begin
-  #          target_list = list_hash[card[:project]]
-  #          target_list ||= list_hash["Puppet"] # Dump things into the Puppet list by default
-
-  #          Trello::Card.create({:name => card[:name], :list_id => target_list, :desc => card[:description]})
-  #        rescue Trello::Error => e
-  #          if e.to_s =~ /^invalid value for desc/
-  #            # Sometimes, Trello can't handle the full description. Retry
-  #            # using just the first line, which is a URL link to the Redmine
-  #            # issue.
-  #            $stderr.puts "Issue rejected. Retrying"
-  #            card[:description] = card[:description].split[0]
-  #            retry
-  #          else
-  #            raise e
-  #          end
-  #        end
-  #      end
-
-  #      $stderr.puts "There are now #{board.cards.length} cards on the board."
-
-  #    end
-  #  end
 
   #  c.desc 'Add users to board'
   #  c.command :add_users do |s|
