@@ -2,6 +2,16 @@ require 'json'
 
 require 'datamine/jira'
 
+# Create a JIRA client that interacts with the API.
+def configure_jira options
+  url = options[:url]
+
+  # This feels a bit weird, but can't see an obviously better way to share
+  # command-global variables.
+  options[:client] = Datamine::Jira::REST.factory url
+end
+
+
 module Datamine::CLI
   desc 'Query JIRA issues'
   command :jira do |c|
@@ -14,20 +24,12 @@ module Datamine::CLI
     c.default_value false
     c.switch :s, :negatable => false
 
-    # Create a JIRA client that interacts with the API.
-    pre do |global_options,command,options,args|
-      url = options[:url]
-
-      # This feels a bit weird, but can't see an obviously better way to share
-      # command-global variables.
-      options[:client] = Datamine::Jira::REST.factory url
-      true
-    end
-
     c.desc 'Retrieve issues from JIRA as JSON'
     c.arg_name 'jira_id', :multiple
     c.command :issue do |s|
       s.action do |global_options,options,args|
+        configure_jira options
+
         raise 'You must specify at least one issue id' if args.empty?
         resp = args.map do |i|
           issue = options[:client].get_issue(i)
@@ -53,6 +55,8 @@ module Datamine::CLI
       s.flag :max_results
 
       s.action do |global_options,options,args|
+        configure_jira options
+
         raise 'You must specify a query' if args.empty?
         resp = options[:client].get_search(args[0], options[:start_at], options[:max_results])
         resp = resp['issues'].map {|i| Datamine::Jira::Util.summarize_issue(i)} if options[:s]

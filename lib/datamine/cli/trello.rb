@@ -4,6 +4,13 @@ require 'open-uri'
 
 require 'trello'
 
+def configure_trello options
+  Trello.configure do |config|
+    config.developer_public_key = options[:key]
+    config.member_token = options[:token]
+  end
+end
+
 module Datamine::CLI
   desc 'Manipulate Trello Boards'
   command :trello do |c|
@@ -17,16 +24,11 @@ module Datamine::CLI
     c.desc 'Default Trello Board'
     c.flag :board_id
 
-    pre do |global_options,command,options,args|
-      Trello.configure do |config|
-        config.developer_public_key = options[:key]
-        config.member_token = options[:token]
-      end
-    end
-
     # Default action is to list all available boards
     c.default_desc 'Display available boards'
     c.action do |global_options,options,args|
+      configure_trello options
+
       Trello::Board.all.each do |b|
         info = [b.id, "\t", b.name]
         # Mark archived boards
@@ -38,6 +40,8 @@ module Datamine::CLI
     c.desc 'Display lists on board'
     c.command :lists do |s|
       s.action do |global_options,options,args|
+        configure_trello options
+
         Trello::Board.find(options[:board_id]).lists.each {|l| puts [l.id, "\t", l.name].join}
       end
     end
@@ -45,6 +49,8 @@ module Datamine::CLI
     c.desc 'Purge cards from board (DANGER this is permanent)'
     c.command :purge do |s|
       s.action do |global_options,options,args|
+        configure_trello options
+
         Trello::Board.find(options[:board_id]).cards.map{|c| c.delete}
       end
     end
@@ -52,6 +58,8 @@ module Datamine::CLI
     c.desc 'Export board as JSON'
     c.command :export do |s|
       s.action do |global_options,options,args|
+        configure_trello options
+
         # From:
         #   http://www.shesek.info/general/automatically-backup-trello-lists-cards-and-other-data
         backup_url = "https://api.trello.com/1/boards/#{options[:board_id]}?key=#{options[:key]}&token=#{options[:token]}&actions=all&actions_limit=1000&cards=all&lists=all&members=all&member_fields=all&checklists=all&fields=all"
