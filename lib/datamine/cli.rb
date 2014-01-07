@@ -10,5 +10,5 @@ module Datamine::CLI
 end
 
 require 'datamine/cli/trello'
+require 'datamine/cli/jira'
 #require 'datamine/cli/redmine'
-#require 'datamine/cli/jira'

@@ -17,4 +17,5 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency 'gli'
   s.add_runtime_dependency 'activeresource'
   s.add_runtime_dependency 'ruby-trello'
+  s.add_runtime_dependency 'httparty'
 end
