@@ -9,6 +9,6 @@ module Datamine::CLI
   version Datamine::VERSION
 end
 
-require 'datamine/cli/redmine'
 require 'datamine/cli/trello'
-require 'datamine/cli/jira'
+#require 'datamine/cli/redmine'
+#require 'datamine/cli/jira'
