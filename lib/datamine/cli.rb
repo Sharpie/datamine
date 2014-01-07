@@ -4,8 +4,8 @@ require 'gli'
 module Datamine::CLI
   extend GLI::App
 
-  program_desc 'Describe your application here'
-
+  program_desc 'A tool for extracting info from issue and task trackers.'
+  config_file File.join(ENV['HOME'], '.datamine.rc.yaml')
   version Datamine::VERSION
 end
 
