@@ -5,3 +5,6 @@ if File.exists? "#{__FILE__}.local"
 end
 
 gemspec
+
+# Pin gems so that the tool works on 1.8.7
+gem 'mime-types', '~> 1.0'
