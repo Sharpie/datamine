@@ -10,6 +10,10 @@ module Datamine::CLI
     c.arg_name 'url_string'
     c.flag :url
 
+    c.desc 'Summary mode. Munge JSON to a reduced, standardized form.'
+    c.default_value false
+    c.switch :s, :negatable => false
+
     # Create a JIRA client that interacts with the API.
     pre do |global_options,command,options,args|
       url = options[:url]
@@ -25,7 +29,11 @@ module Datamine::CLI
     c.command :issue do |s|
       s.action do |global_options,options,args|
         raise 'You must specify at least one issue id' if args.empty?
-        resp = args.map {|a| options[:client].get_issue(a) }
+        resp = args.map do |i|
+          issue = options[:client].get_issue(i)
+          issue = Datamine::Jira::Util.summarize_issue(issue) if options[:s]
+          issue
+        end
 
         puts JSON.pretty_generate(resp)
       end
@@ -47,6 +55,7 @@ module Datamine::CLI
       s.action do |global_options,options,args|
         raise 'You must specify a query' if args.empty?
         resp = options[:client].get_search(args[0], options[:start_at], options[:max_results])
+        resp = resp['issues'].map {|i| Datamine::Jira::Util.summarize_issue(i)} if options[:s]
 
         puts JSON.pretty_generate(resp)
       end
