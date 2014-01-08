@@ -124,22 +124,26 @@ module Datamine::CLI
       end
     end
 
-  #  # Everything below this line is currently broken and shouldn't be used.
+    c.desc 'Add users to board'
+    c.arg_name 'csv_file'
+    c.command :add_users do |s|
+      s.action do |global_options,options,args|
+        configure_trello options
+        require 'addressable/uri'
 
+        csv_file = args.first
+        raise 'You must provide a CSV file containing usernames and emails' if csv_file.nil?
 
-  #  c.desc 'Add users to board'
-  #  c.command :add_users do |s|
-  #    s.action do |global_options,options,args|
-  #      require 'addressable/uri'
-  #      uri = Addressable::URI.new
+        uri = Addressable::URI.new
+        auth_params = options.select{|k, v| [:key, :token].include? k}
 
-  #      CSV.table(args.first).map do |row|
-  #        uri.query_values = { :fullName => row[:fullname], :email => row[:email], }.update options[:trello]
-  #        puts `curl -H 'Accept: application/json' -X PUT --data '#{uri.query}' https://api.trello.com/1/board/#{board_id}/members`
-  #      end
+        CSV.table(csv_file).each do |row|
+          uri.query_values = { :fullName => row[:fullname], :email => row[:email] }.update auth_params
+          puts `curl -H 'Accept: application/json' -X PUT --data '#{uri.query}' https://api.trello.com/1/board/#{options[:board_id]}/members`
+        end
 
-  #    end
-  #  end
+      end
+    end
 
   end
 end
