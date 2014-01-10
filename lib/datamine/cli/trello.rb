@@ -86,8 +86,21 @@ module Datamine::CLI
       s.arg_name 'string'
       s.flag :list
 
+      s.desc 'The first ticket in the list to post'
+      s.arg_name 'integer'
+      s.default_value 0
+      s.flag :start
+
+      s.desc 'The last ticket in the list to post'
+      s.arg_name 'integer'
+      s.default_value -1
+      s.flag :stop
+
       s.action do |global_options,options,args|
         configure_trello options
+
+        options[:start] = options[:start].to_i
+        options[:stop] = options[:stop].to_i
 
         board = Trello::Board.find(options[:board_id])
         list_hash = board.lists.map{|l| {l.name => l.id}}.reduce Hash.new, :merge
@@ -99,6 +112,8 @@ module Datamine::CLI
         raise 'You must provide a valid json file' if issue_file.nil? || (not File.exist?(issue_file))
 
         tickets = JSON.parse(File.read(issue_file))
+        options[:stop] = tickets.length if options[:stop] == -1
+        tickets = tickets[ options[:start], options[:stop] ]
 
         # Ensure we find archived cards.
         existing_cards = board.cards({:filter => :all})
