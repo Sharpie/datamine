@@ -46,6 +46,15 @@ module Datamine::CLI
       end
     end
 
+    c.desc 'Archive all cards on board'
+    c.command :archive do |s|
+      s.action do |global_options,options,args|
+        configure_trello options
+
+        Trello::Board.find(options[:board_id]).cards.map{|c| c.close!}
+      end
+    end
+
     c.desc 'Purge cards from board (DANGER this is permanent)'
     c.command :purge do |s|
       s.action do |global_options,options,args|
