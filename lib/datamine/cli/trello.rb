@@ -100,15 +100,24 @@ module Datamine::CLI
 
         tickets = JSON.parse(File.read(issue_file))
 
-        existing_cards = board.cards.map{|c| c.name}
+        # Ensure we find archived cards.
+        existing_cards = board.cards({:filter => :all})
         tickets.each do |t|
           card = {
            :name => "(#{t['key']}) #{t['summary']}",
            :description => "# #{t['url']}\n---\n#{t['description']}",
           }
 
-          if existing_cards.include? card[:name]
-            $stderr.puts "Issue #{t['key']} is already on the board."
+          existing_card = existing_cards.find {|e| e.name == card[:name]}
+          unless existing_card.nil?
+            if existing_card.closed?
+              existing_card.closed = false
+              existing_card.list_id = target_list
+              existing_card.save
+              $stderr.puts "Retrieved archived card for #{t['key']}."
+            else
+              $stderr.puts "Issue #{t['key']} is already on the board."
+            end
             next
           end
 
