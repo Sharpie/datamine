@@ -14,11 +14,12 @@ spec = Gem::Specification.new do |s|
   s.bindir = 'bin'
   s.executables << 'datamine'
 
+  s.required_ruby_version = '>= 1.9.3'
+
   s.add_runtime_dependency 'gli'
   s.add_runtime_dependency 'ruby-trello'
 
-  # These are all pinned to support Ruby 1.8.7.
-  s.add_runtime_dependency 'activeresource', '~> 3.0'
-  s.add_runtime_dependency 'httparty', '~> 0.11.0'
-  s.add_runtime_dependency 'mime-types', '~> 1.0'
+  s.add_runtime_dependency 'activeresource'
+  s.add_runtime_dependency 'httparty'
+  s.add_runtime_dependency 'mime-types'
 end
