@@ -10,7 +10,7 @@ module Datamine::Jira
       format :json
 
       def self.get_issue(issue_key)
-        get "/issue/#{issue_key}"
+        get "/issue/#{issue_key}", :query => {:expand => 'changelog'}
       end
 
       def self.get_issue_remotelinks(issue_key)
@@ -18,7 +18,7 @@ module Datamine::Jira
       end
 
       def self.get_search(jql_string, start_at=0, max_results=1000)
-        get "/search", :query => {:jql => jql_string, :startAt => start_at, :maxResults => max_results}
+        get "/search", :query => {:jql => jql_string, :startAt => start_at, :maxResults => max_results, :expand => 'changelog'}
       end
     end
 
